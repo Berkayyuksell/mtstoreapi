@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SyncController;
+use App\Http\Controllers\ZplController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -21,6 +22,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Ürün arama — tüm giriş yapmış kullanıcılar
     Route::get('/products', [ProductController::class, 'getProductList']);
+
+    // ZPL Etiket
+    Route::prefix('zpl')->group(function () {
+        Route::get('/templates', [ZplController::class, 'listTemplates']);
+        Route::post('/label',    [ZplController::class, 'fetchBarcodeLabel']);
+    });
 
     // Sync — sadece admin kullanıcılar
     Route::middleware('admin')->group(function () {

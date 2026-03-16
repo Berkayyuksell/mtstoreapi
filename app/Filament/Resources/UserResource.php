@@ -10,6 +10,7 @@ use App\Models\Project;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Models\ZplLabelTemplate;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -38,6 +39,11 @@ class UserResource extends Resource
     protected static ?string $modelLabel = 'Kullanıcı';
 
     protected static ?string $pluralModelLabel = 'Kullanıcılar';
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) User::count();
+    }
 
     public static function form(Form $form): Form
     {
@@ -189,6 +195,45 @@ class UserResource extends Resource
                             }),
                     ])
                     ->columns(2),
+
+                Section::make('ZPL Etiket Ayarları')
+                    ->description('Kullanıcıya özgü fiyat grupları ve ZPL template. Boş bırakılırsa mağaza → global varsayılanlar kullanılır.')
+                    ->schema([
+                        TextInput::make('price_group_code')
+                            ->label('Fiyat Grup Kodu')
+                            ->placeholder('Örn: PSF (boş = mağaza/global)')
+                            ->maxLength(50)
+                            ->nullable(),
+
+                        TextInput::make('disc_price_group_code')
+                            ->label('İndirim Fiyat Grup Kodu')
+                            ->placeholder('Örn: PSF_IND (boş = mağaza/global)')
+                            ->maxLength(50)
+                            ->nullable(),
+
+                        Select::make('zpl_label_template_id')
+                            ->label('ZPL Template')
+                            ->placeholder('Varsayılan template (boş bırakılabilir)')
+                            ->options(function (Get $get) {
+                                $projectId = $get('project_id');
+                                return ZplLabelTemplate::where('is_active', true)
+                                    ->where(function ($q) use ($projectId) {
+                                        $q->whereNull('project_id');
+                                        if ($projectId) {
+                                            $q->orWhere('project_id', $projectId);
+                                        }
+                                    })
+                                    ->get()
+                                    ->mapWithKeys(fn ($t) => [
+                                        $t->id => $t->template_name . ' [' . $t->template_code . ']' . ($t->project_id ? '' : ' — Global'),
+                                    ])
+                                    ->toArray();
+                            })
+                            ->nullable()
+                            ->searchable()
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(2),
             ]);
     }
 
@@ -196,9 +241,6 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('id')
-                    ->label('ID')
-                    ->sortable(),
 
                 TextColumn::make('name')
                     ->label('Ad Soyad')
@@ -238,6 +280,13 @@ class UserResource extends Resource
                     ->sortable()
                     ->toggleable()
                     ->placeholder('-'),
+
+                TextColumn::make('zplLabelTemplate.template_name')
+                    ->label('ZPL Template')
+                    ->placeholder('Varsayılan')
+                    ->badge()
+                    ->color('warning')
+                    ->toggleable(),
 
                 IconColumn::make('is_admin')
                     ->label('Admin')

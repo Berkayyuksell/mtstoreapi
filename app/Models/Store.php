@@ -13,6 +13,8 @@ class Store extends Model
         'office_id',
         'StoreCode',
         'StoreName',
+        'price_group_code',
+        'disc_price_group_code',
     ];
 
     public function office()

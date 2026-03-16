@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\User;
 use App\Services\NebimApiClient;
 use App\Services\SyncService;
+use App\Services\ZplService;
 use Filament\Pages\Page;
 
 class ApiTester extends Page
@@ -94,6 +95,15 @@ class ApiTester extends Page
                     'params' => [
                         ['key' => 'Barcode',  'label' => 'Barkod',   'required' => true],
                         ['key' => 'LangCode', 'label' => 'Dil Kodu', 'required' => false],
+                    ],
+                ],
+            ],
+            'ZPL Etiket' => [
+                'zpl.label' => [
+                    'label'  => 'Barkoddan ZPL Etiket Oluştur',
+                    'method' => 'POST',
+                    'params' => [
+                        ['key' => 'barcodes', 'label' => 'Barkod(lar) — virgülle ayırın', 'required' => true],
                     ],
                 ],
             ],
@@ -199,6 +209,27 @@ class ApiTester extends Page
                 return ['status' => 502, 'data' => ['error' => $result['error']]];
             }
             return ['status' => 200, 'data' => ['status' => true, 'data' => array_slice($result['data'], 0, 10)]];
+        }
+
+        // ---------- ZPL Etiket ----------
+        if ($this->endpointKey === 'zpl.label') {
+            $user = User::with(['project', 'store'])->find($this->userId);
+
+            if (! $user) {
+                return ['status' => 404, 'data' => ['error' => 'Kullanıcı bulunamadı']];
+            }
+
+            $result = app(ZplService::class)->generateLabels(
+                $user,
+                $params['barcodes'] ?? '',
+            );
+
+            return [
+                'status' => $result['ok'] ? 200 : 422,
+                'data'   => $result['ok']
+                    ? ['success' => true, 'count' => count($result['zpl']), 'zpl' => $result['zpl'], 'inventory' => $result['inventory'], 'log' => $result['log']]
+                    : ['success' => false, 'error' => $result['error'], 'log' => $result['log']],
+            ];
         }
 
         // ---------- Senkronizasyon ----------

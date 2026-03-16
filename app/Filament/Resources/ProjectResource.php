@@ -30,6 +30,11 @@ class ProjectResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Projeler';
 
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) Project::count();
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -91,9 +96,6 @@ class ProjectResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('id')
-                    ->label('ID')
-                    ->sortable(),
 
                 TextColumn::make('project_name')
                     ->label('Proje Adı')

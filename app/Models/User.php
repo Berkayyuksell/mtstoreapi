@@ -21,6 +21,9 @@ class User extends Authenticatable implements FilamentUser
         'office_id',
         'store_id',
         'warehouse_id',
+        'price_group_code',
+        'disc_price_group_code',
+        'zpl_label_template_id',
         'name',
         'email',
         'password',
@@ -69,6 +72,41 @@ class User extends Authenticatable implements FilamentUser
     public function warehouse()
     {
         return $this->belongsTo(Warehouse::class);
+    }
+
+    public function zplLabelTemplate()
+    {
+        return $this->belongsTo(ZplLabelTemplate::class);
+    }
+
+    /**
+     * Kullanıcının aktif ZPL fiyat grup kodunu döner.
+     * Öncelik: user → store → fallback sabit değer
+     */
+    public function resolvedPriceGroupCode(): string
+    {
+        return $this->price_group_code
+            ?? $this->store?->price_group_code
+            ?? 'PSF';
+    }
+
+    public function resolvedDiscPriceGroupCode(): string
+    {
+        return $this->disc_price_group_code
+            ?? $this->store?->disc_price_group_code
+            ?? 'PSF_IND';
+    }
+
+    /**
+     * Kullanıcıya atanmış template; yoksa projenin varsayılanı döner.
+     */
+    public function resolvedZplTemplate(): ?\App\Models\ZplLabelTemplate
+    {
+        if ($this->zpl_label_template_id) {
+            return $this->zplLabelTemplate;
+        }
+
+        return \App\Models\ZplLabelTemplate::defaultForProject($this->project_id);
     }
 
     public function modules()

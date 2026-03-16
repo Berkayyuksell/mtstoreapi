@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call(ZplLabelTemplateSeeder::class);
         $this->call(AdminUserSeeder::class);
     }
 }

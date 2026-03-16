@@ -28,6 +28,11 @@ class ModuleResource extends Resource
 
     protected static ?int $navigationSort = 5;
 
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) Module::count();
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -44,9 +49,6 @@ class ModuleResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('id')
-                    ->label('ID')
-                    ->sortable(),
 
                 TextColumn::make('name')
                     ->label('Modül Adı')
